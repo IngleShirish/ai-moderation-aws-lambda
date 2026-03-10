@@ -1,0 +1,47 @@
+service: ai-moderation
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: us-east-1
+  stage: dev
+
+  # API Gateway throttling (Option 1)
+  httpApi:
+    throttle:
+      burstLimit: 10
+      rateLimit: 5
+
+  # API Key setup (Option 2)
+  apiGateway:
+    apiKeys:
+      - moderation-api-key
+
+  # Bedrock permission
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - bedrock:InvokeModel
+          Resource: "*"
+
+functions:
+  api:
+    handler: app.main.handler
+
+    events:
+      - httpApi:
+          path: /moderate
+          method: post
+          private: true
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    slim: true
